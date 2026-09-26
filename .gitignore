@@ -1,3 +1,6 @@
 # TDT4225-Exercise2
 .csv
 /porto/
+/.vscode/
+/__pycache__/
+.env
