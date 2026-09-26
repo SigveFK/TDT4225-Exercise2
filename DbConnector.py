@@ -20,12 +20,12 @@ class DbConnector:
     PASSWORD = "test123" // The password you set for said user
     """
 
-    def __init__(self, HOST=None, DATABASE=None, USER=None, PASSWORD=None, PORT=None):
-        HOST = HOST or os.getenv("DB_HOST", "127.0.0.1")
-        DATABASE = DATABASE or os.getenv("DB_DATABASE", "exercise2")
-        USER = USER or os.getenv("DB_USER", "root")
-        PASSWORD = PASSWORD or os.getenv("DB_PASSWORD", "secret")
-        PORT = PORT or int(os.getenv("DB_PORT", "3306"))
+    def __init__(self,
+                 HOST=os.getenv("DB_HOST"),
+                 DATABASE=os.getenv("DB_DATABASE"),
+                 USER=os.getenv("DB_USER"),
+                 PASSWORD=os.getenv("DB_PASSWORD"),
+                 PORT=int(os.getenv("DB_PORT", "3306"))):
 
         # Connect to the database
         try:
