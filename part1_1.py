@@ -69,7 +69,6 @@ def analyze(csv_path):
     del summary["point_counts"]
     return summary
 
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--csv", type=Path, default=DEFAULT_CSV)
@@ -77,7 +76,6 @@ def main():
     if not args.csv.is_file():
         parser.error(f"CSV file does not exist: {args.csv}")
     print(json.dumps(analyze(args.csv), indent=2))
-
 
 if __name__ == "__main__":
     main()
