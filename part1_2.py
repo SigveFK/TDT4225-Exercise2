@@ -8,9 +8,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from DbConnector import DbConnector
-from tabulate import tabulate # Test
 
-DEFAULT_CSV = Path(__file__).with_name("porto") / "porto_mini.csv"
+DEFAULT_CSV = Path(__file__).with_name("porto") / "porto.csv"
 SCHEMA_FILE = Path(__file__).with_name("schema.sql")
 BATCH_SIZE = 2000
 
@@ -129,13 +128,6 @@ def insert_batch(cursor, connection, trips):
         cursor.executemany(POINT_INSERT, points)
     connection.commit()
 
-# Test
-def print_tables(cursor):
-    for table in ("taxis", "trips", "trajectory_points"):
-        cursor.execute(f"SELECT * FROM {table} LIMIT 5")
-        print(f"\n{table}:")
-        print(tabulate(cursor.fetchall(), headers=cursor.column_names, tablefmt="grid"))
-
 def load_data(csv_path, reset):
     connection = DbConnector()
     valid_rows = 0
@@ -162,7 +154,6 @@ def load_data(csv_path, reset):
                     batch.clear()
 
         insert_batch(connection.cursor, connection.db_connection, batch)
-        print_tables(connection.cursor) # Test
     finally:
         connection.close_connection()
 

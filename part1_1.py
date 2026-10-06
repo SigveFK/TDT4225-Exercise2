@@ -7,7 +7,7 @@ import json
 from collections import Counter
 from pathlib import Path
 
-DEFAULT_CSV = Path(__file__).with_name("porto") / "porto_mini.csv"
+DEFAULT_CSV = Path(__file__).with_name("porto") / "porto.csv"
 
 def get_points(polyline):
     # Convert a POLYLINE value from CSV text to a list of GPS points.

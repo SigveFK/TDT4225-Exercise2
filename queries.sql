@@ -2,16 +2,16 @@
 SELECT
 (SELECT COUNT(*) from taxis) AS taxi_count,
 (SELECT COUNT(*) from trips) AS trip_count,
-(SELECT COUNT(*) from trajectory_points) AS trajectory_point_count
+(SELECT COUNT(*) from trajectory_points) AS trajectory_point_count;
 
 --What is the average number of trips per taxi?
 SELECT AVG(trips_count)
 FROM (
     SELECT taxi_id, COUNT(*) AS trips_count
     FROM trips
-    LEFT JOIN taxis ON trips.taxi_id = taxis.taxi_id
     GROUP BY taxi_id
 ) AS taxi_trips_counts
+;
 
 --List the top 20 taxis with the most trips.
 SELECT taxi_id, COUNT(*) AS trips_count
@@ -19,6 +19,7 @@ FROM trips
 GROUP BY taxi_id
 ORDER BY trips_count DESC
 LIMIT 20
+;
 
 --  What is the most used call type per taxi?
 SELECT taxi_id, call_type, call_type_count
@@ -115,6 +116,3 @@ WHERE previous_end IS NOT NULL
 GROUP BY taxi_id
 ORDER BY avg_idle_hours DESC
 LIMIT 20;
-
-
-
