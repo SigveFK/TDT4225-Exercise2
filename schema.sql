@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS trips (
     end_latitude DOUBLE NULL,
     CONSTRAINT fk_trip_taxi
         FOREIGN KEY (taxi_id) REFERENCES taxis (taxi_id)
-        ON DELETE CASCADE,
+        ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS trajectory_points (
