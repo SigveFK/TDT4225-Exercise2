@@ -5,6 +5,7 @@ SELECT
 (SELECT COUNT(*) from trajectory_points) AS trajectory_point_count;
 
 --What is the average number of trips per taxi?
+--Denne kalkulerer kun blant taxiene som har minst én tur. Hvis du vil inkludere taxier uten turer, må du bruke en LEFT JOIN mellom taxis og trips.
 SELECT AVG(trips_count)
 FROM (
     SELECT taxi_id, COUNT(*) AS trips_count
@@ -28,7 +29,7 @@ FROM (
         taxi_id,
         call_type,
         COUNT(*) AS call_type_count,
-        ROW_NUMBER() OVER (
+        RANK() OVER (
             PARTITION BY taxi_id
             ORDER BY COUNT(*) DESC
         ) AS rn
