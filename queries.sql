@@ -5,7 +5,6 @@ SELECT
 (SELECT COUNT(*) from trajectory_points) AS trajectory_point_count;
 
 --What is the average number of trips per taxi?
---Denne kalkulerer kun blant taxiene som har minst én tur. Hvis du vil inkludere taxier uten turer, må du bruke en LEFT JOIN mellom taxis og trips.
 SELECT AVG(trips_count)
 FROM (
     SELECT taxi_id, COUNT(*) AS trips_count
@@ -38,7 +37,8 @@ FROM (
     FROM trips
     GROUP BY taxi_id, call_type
 ) x
-WHERE rn = 1;
+WHERE rn = 1
+LIMIT 20;
 
 /*For each call type, compute the average trip duration and distance, and also
 report the share of trips starting in four time bands: 00–06, 06–12, 12–18, and
@@ -55,7 +55,8 @@ SELECT
 
 FROM trips
 WHERE point_count > 2
-GROUP BY call_type;
+GROUP BY call_type
+;
 
 /*Find the taxis with the most total hours driven as well as total distance driven.
 List them in order of total hours.*/
@@ -66,7 +67,9 @@ SELECT
 FROM trips
 WHERE point_count > 2
 GROUP BY taxi_id
-ORDER BY total_hours DESC;
+ORDER BY total_hours DESC
+LIMIT 20
+;
 
 
 /* Find the trips that passed within 100 m of Porto City Hall.
@@ -78,7 +81,9 @@ WHERE t.point_count > 2
   AND ST_Distance_Sphere(
       POINT(tp.longitude, tp.latitude),
       POINT(-8.62911, 41.15794)
-  ) <= 100;
+  ) <= 100
+LIMIT 20
+;
 
 /* Identify the number of invalid trips. An invalid trip is defined as a trip with fewer
 than 3 GPS points.*/
@@ -88,10 +93,15 @@ WHERE point_count < 3;
 
 /* Find the trips that started on one calendar day and ended on the next (midnight
 crossers).*/
+-- Find trips crossing midnight in Porto local time
 SELECT *
 FROM trips
 WHERE point_count > 2
-  AND DATE(end_time) = DATE(start_time) + INTERVAL 1 DAY;
+  AND DATE(CONVERT_TZ(end_time, '+00:00', 'Europe/Lisbon'))
+    = DATE(CONVERT_TZ(start_time, '+00:00', 'Europe/Lisbon'))
+      + INTERVAL 1 DAY
+LIMIT 20
+;
 
 /* Find the trips whose start and end points are within 50 m of each other (circular
 trips).*/
@@ -103,7 +113,9 @@ WHERE point_count > 2
   AND ST_Distance_Sphere(
       POINT(start_longitude, start_latitude),
       POINT(end_longitude, end_latitude)
-  ) <= 50;
+  ) <= 50
+LIMIT 20
+;
 
 
 /* For each taxi, compute the average idle time between consecutive trips. List the

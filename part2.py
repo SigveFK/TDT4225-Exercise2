@@ -58,11 +58,22 @@ def run_queries():
     finally:
         connection.close_connection()
 
+def save_results_to_file():
+    from contextlib import redirect_stdout
+
+    output_file = Path(__file__).with_name("query_results.txt")
+
+    with output_file.open("w", encoding="utf-8") as f:
+        with redirect_stdout(f):
+            run_queries()
+
+    print(f"Results saved to {output_file}")
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.parse_args()
-    run_queries()
+    save_results_to_file()
 
 
 if __name__ == "__main__":
