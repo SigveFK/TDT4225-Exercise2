@@ -28,6 +28,7 @@ def analyze(csv_path):
         "rows": 0,
         "valid_rows": 0,
         "invalid_rows": 0,
+        "invalid_trips": 0,
         "taxis": set(),
         "total_gps_points": 0,
         "missing_data_rows": 0,
@@ -57,6 +58,7 @@ def analyze(csv_path):
             summary["total_gps_points"] += len(points)
             summary["missing_data_rows"] += missing_data
             summary["empty_trajectory_rows"] += not points
+            summary["invalid_trips"] += len(points) < 3
             summary["call_types"][row["CALL_TYPE"]] += 1
             summary["day_types"][row["DAY_TYPE"]] += 1
             summary["point_counts"][len(points)] += 1
