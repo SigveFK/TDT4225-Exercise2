@@ -29,6 +29,8 @@ def analyze(csv_path):
         "valid_rows": 0,
         "invalid_rows": 0,
         "invalid_trips": 0,
+        "duplicate_trip_keys": set(),
+        "duplicate_rows": 0,
         "taxis": set(),
         "total_gps_points": 0,
         "missing_data_rows": 0,
@@ -38,9 +40,27 @@ def analyze(csv_path):
         "point_counts": Counter(),
     }
 
-    with csv_path.open(encoding="utf-8", newline="") as file:
-        for row in csv.DictReader(file):
+    with csv_path.open(encoding="utf-8-sig", newline="") as file:
+        reader = csv.DictReader(file)
+        rows_by_trip_id = {}
+
+        for row in reader:
             summary["rows"] += 1
+            try:
+                trip_id = int(row["TRIP_ID"])
+            except (KeyError, TypeError, ValueError):
+                trip_id = None
+
+            if trip_id is not None:
+                # Count repeated keys, then check whether repeated rows are identical.
+                complete_row = tuple(row.values())
+                previous_rows = rows_by_trip_id.setdefault(trip_id, set())
+                if previous_rows:
+                    summary["duplicate_trip_keys"].add(trip_id)
+                    if complete_row in previous_rows:
+                        summary["duplicate_rows"] += 1
+                previous_rows.add(complete_row)
+
             try:
                 points = get_points(row["POLYLINE"])
                 if row["CALL_TYPE"] not in {"A", "B", "C"}:
@@ -64,6 +84,7 @@ def analyze(csv_path):
             summary["point_counts"][len(points)] += 1
 
     summary["taxis"] = len(summary["taxis"])
+    summary["duplicate_trip_keys"] = len(summary["duplicate_trip_keys"])
     summary["call_types"] = dict(sorted(summary["call_types"].items()))
     summary["day_types"] = dict(sorted(summary["day_types"].items()))
     summary["point_count_min"] = min(summary["point_counts"], default=None)
