@@ -10,6 +10,7 @@ SELECT AVG(trips_count)
 FROM (
     SELECT taxi_id, COUNT(*) AS trips_count
     FROM trips
+    WHERE point_count > 2
     GROUP BY taxi_id
 ) AS taxi_trips_counts
 ;
@@ -17,6 +18,7 @@ FROM (
 --List the top 20 taxis with the most trips.
 SELECT taxi_id, COUNT(*) AS trips_count
 FROM trips
+WHERE point_count > 2
 GROUP BY taxi_id
 ORDER BY trips_count DESC
 LIMIT 20
@@ -52,6 +54,7 @@ SELECT
     SUM(CASE WHEN HOUR(start_time) >= 18 AND HOUR(start_time) < 24 THEN 1 ELSE 0 END) / COUNT(*) AS share_18_24
 
 FROM trips
+WHERE point_count > 2
 GROUP BY call_type;
 
 /*Find the taxis with the most total hours driven as well as total distance driven.
@@ -61,18 +64,21 @@ SELECT
     SUM(duration) / 3600 AS total_hours,
     SUM(distance) AS total_distance
 FROM trips
+WHERE point_count > 2
 GROUP BY taxi_id
 ORDER BY total_hours DESC;
 
 
 /* Find the trips that passed within 100 m of Porto City Hall.
 (longitude, latitude) = (-8.62911, 41.15794) */
-SELECT DISTINCT trip_id
-FROM trajectory_points
-WHERE ST_Distance_Sphere(
-    POINT(longitude, latitude),
-    POINT(-8.62911, 41.15794)
-) <= 100;
+SELECT DISTINCT tp.trip_id
+FROM trajectory_points tp
+JOIN trips t ON tp.trip_id = t.trip_id
+WHERE t.point_count > 2
+  AND ST_Distance_Sphere(
+      POINT(tp.longitude, tp.latitude),
+      POINT(-8.62911, 41.15794)
+  ) <= 100;
 
 /* Identify the number of invalid trips. An invalid trip is defined as a trip with fewer
 than 3 GPS points.*/
@@ -84,13 +90,15 @@ WHERE point_count < 3;
 crossers).*/
 SELECT *
 FROM trips
-WHERE DATE(end_time) = DATE(start_time) + INTERVAL 1 DAY;
+WHERE point_count > 2
+  AND DATE(end_time) = DATE(start_time) + INTERVAL 1 DAY;
 
 /* Find the trips whose start and end points are within 50 m of each other (circular
 trips).*/
 SELECT trip_id
 FROM trips
-WHERE end_longitude IS NOT NULL
+WHERE point_count > 2
+  AND end_longitude IS NOT NULL
   AND end_latitude IS NOT NULL
   AND ST_Distance_Sphere(
       POINT(start_longitude, start_latitude),
@@ -112,6 +120,7 @@ FROM (
             ORDER BY start_time
         ) AS previous_end
     FROM trips
+    WHERE point_count > 2
 ) AS t
 WHERE previous_end IS NOT NULL
 GROUP BY taxi_id
