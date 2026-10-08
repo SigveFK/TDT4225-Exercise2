@@ -57,6 +57,23 @@ def distance_in_km(first, second):
     value += math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
     return 6371.0088 * 2 * math.asin(math.sqrt(value))
 
+def find_duplicate_ids(csv_path):
+    seen = set()
+    duplicates = set()
+    max_id = 0
+
+    with csv_path.open(encoding="utf-8", newline="") as file:
+        for row in csv.DictReader(file):
+            trip_id = int(row["TRIP_ID"])
+            max_id = max(max_id, trip_id)
+
+            if trip_id in seen:
+                duplicates.add(trip_id)
+            else:
+                seen.add(trip_id)
+
+    return duplicates, max_id
+
 def clean_row(row):
     points = get_points(row["POLYLINE"])
     start_time = datetime.fromtimestamp(
@@ -130,9 +147,17 @@ def insert_batch(cursor, connection, trips):
 
 def load_data(csv_path, reset):
     connection = DbConnector()
+
+    duplicate_ids, max_id = find_duplicate_ids(csv_path)
+    next_id = max_id + 1
+    seen_versions = {}
+
     valid_rows = 0
     invalid_rows = 0
+    identical_duplicates = 0
+    reassigned_duplicates = 0
     batch = []
+    id_changes = []
 
     try:
         if reset:
@@ -147,18 +172,54 @@ def load_data(csv_path, reset):
                     invalid_rows += 1
                     continue
 
+                original_id = trip["trip_id"]
+
+                if original_id in duplicate_ids:
+                    values = tuple(
+                        value for key, value in row.items()
+                        if key != "TRIP_ID"
+                    )
+
+                    if original_id not in seen_versions:
+                        seen_versions[original_id] = set()
+
+                    # Skip identical duplicates
+                    if values in seen_versions[original_id]:
+                        identical_duplicates += 1
+                        continue
+
+                    # Generate new ID if the data differs
+                    if seen_versions[original_id]:
+                        trip["trip_id"] = next_id
+                        id_changes.append((original_id, next_id))
+                        next_id += 1
+                        reassigned_duplicates += 1
+
+                    seen_versions[original_id].add(values)
+
                 batch.append(trip)
                 valid_rows += 1
+
                 if len(batch) == BATCH_SIZE:
                     insert_batch(connection.cursor, connection.db_connection, batch)
                     batch.clear()
 
-        insert_batch(connection.cursor, connection.db_connection, batch)
+        if batch:
+            insert_batch(connection.cursor, connection.db_connection, batch)
+
+        # Save the changed trip IDs
+        with open("reassigned_trip_ids.csv", "w", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow(["original_trip_id", "new_trip_id"])
+            writer.writerows(id_changes)
+
     finally:
         connection.close_connection()
 
     print(f"Inserted {valid_rows} trips.")
     print(f"Skipped {invalid_rows} invalid rows.")
+    print(f"Removed {identical_duplicates} identical duplicates.")
+    print(f"Reassigned {reassigned_duplicates} duplicate IDs.")
 
 
 def main():
