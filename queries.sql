@@ -37,8 +37,7 @@ FROM (
     FROM trips
     GROUP BY taxi_id, call_type
 ) x
-WHERE rn = 1
-LIMIT 20;
+WHERE rn = 1;
 
 /*For each call type, compute the average trip duration and distance, and also
 report the share of trips starting in four time bands: 00–06, 06–12, 12–18, and
@@ -59,7 +58,8 @@ GROUP BY call_type
 ;
 
 /*Find the taxis with the most total hours driven as well as total distance driven.
-List them in order of total hours.*/
+List them in order of total hours.
+Added LIMIT 20 because you often want to look at the ones with the most total hours or toal distance driven.*/
 SELECT
     taxi_id,
     SUM(duration) / 3600 AS total_hours,
@@ -82,7 +82,6 @@ WHERE t.point_count > 2
       POINT(tp.longitude, tp.latitude),
       POINT(-8.62911, 41.15794)
   ) <= 100
-LIMIT 20
 ;
 
 /* Identify the number of invalid trips. An invalid trip is defined as a trip with fewer
@@ -100,7 +99,6 @@ WHERE point_count > 2
   AND DATE(CONVERT_TZ(end_time, '+00:00', 'Europe/Lisbon'))
     = DATE(CONVERT_TZ(start_time, '+00:00', 'Europe/Lisbon'))
       + INTERVAL 1 DAY
-LIMIT 20
 ;
 
 /* Find the trips whose start and end points are within 50 m of each other (circular
@@ -114,7 +112,6 @@ WHERE point_count > 2
       POINT(start_longitude, start_latitude),
       POINT(end_longitude, end_latitude)
   ) <= 50
-LIMIT 20
 ;
 
 
